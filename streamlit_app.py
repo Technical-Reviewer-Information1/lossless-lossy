@@ -307,17 +307,17 @@ if (data_type == "テキスト" and has_text_data) or (data_type == "画像" and
                 
                 with col1:
                     st.subheader("🖼️ 元の画像")
-                    st.image(image, caption="オリジナル", use_column_width=True)
+                    st.image(image, caption="オリジナル", use_container_width=True)
                 
                 with col2:
                     st.subheader("🔄 可逆圧縮後")
                     # 可逆圧縮では画質は変わらない
-                    st.image(image, caption="PNG圧縮（品質劣化なし）", use_column_width=True)
+                    st.image(image, caption="PNG圧縮（品質劣化なし）", use_container_width=True)
                     st.success("✅ 元の画像と完全に同じ品質")
                 
                 with col3:
                     st.subheader("🗜️ 非可逆圧縮後")
-                    st.image(lossy_image, caption=f"JPEG圧縮（品質{quality}）", use_column_width=True)
+                    st.image(lossy_image, caption=f"JPEG圧縮（品質{quality}）", use_container_width=True)
                     
                     # PSNR計算
                     psnr_value = calculate_psnr(image, lossy_image)

@@ -31,12 +31,8 @@ def compress_text_lossless(text: str) -> Tuple[bytes, float]:
     compression_ratio = len(compressed_data) / len(original_data)
     return compressed_data, compression_ratio
 
-def compress_image_lossless(image: Image.Image) -> Tuple[bytes, float]:
+def compress_image_lossless(image: Image.Image, original_size: int) -> Tuple[bytes, float]:
     """画像の可逆圧縮（PNG形式）"""
-    original_buffer = io.BytesIO()
-    image.save(original_buffer, format='PNG', optimize=True)
-    original_size = original_buffer.tell()
-    
     compressed_buffer = io.BytesIO()
     image.save(compressed_buffer, format='PNG', optimize=True, compress_level=9)
     compressed_size = compressed_buffer.tell()
@@ -44,12 +40,8 @@ def compress_image_lossless(image: Image.Image) -> Tuple[bytes, float]:
     compression_ratio = compressed_size / original_size
     return compressed_buffer.getvalue(), compression_ratio
 
-def compress_image_lossy(image: Image.Image, quality: int = 70) -> Tuple[bytes, float, Image.Image]:
+def compress_image_lossy(image: Image.Image, quality: int, original_size: int) -> Tuple[bytes, float, Image.Image]:
     """画像の非可逆圧縮（JPEG形式）"""
-    original_buffer = io.BytesIO()
-    image.save(original_buffer, format='PNG')
-    original_size = original_buffer.tell()
-    
     compressed_buffer = io.BytesIO()
     image.save(compressed_buffer, format='JPEG', quality=quality, optimize=True)
     compressed_size = compressed_buffer.tell()
@@ -244,12 +236,20 @@ if (data_type == "テキスト" and has_text_data) or (data_type == "画像" and
                             pixels.append((r, g, b))
                     image.putdata(pixels)
                 
-                # 元の画像サイズ
-                original_buffer = io.BytesIO()
-                image.save(original_buffer, format='PNG')
-                original_size = original_buffer.tell()
+                # 元の画像サイズ（未圧縮のビットマップサイズで計算）
+                width, height = image.size
+                if image.mode == 'RGB':
+                    original_size = width * height * 3  # RGB: 3 bytes per pixel
+                elif image.mode == 'RGBA':
+                    original_size = width * height * 4  # RGBA: 4 bytes per pixel
+                else:
+                    original_size = width * height  # グレースケールなど: 1 byte per pixel
                 
-                # 非可逆圧縮の品質スライダー（最初に配置）
+                # 可逆圧縮
+                lossless_data, lossless_ratio = compress_image_lossless(image, original_size)
+                lossless_size = len(lossless_data)
+                
+                # 非可逆圧縮の品質スライダー
                 st.header("⚙️ 非可逆圧縮の品質調整")
                 
                 quality = st.slider(
@@ -259,12 +259,8 @@ if (data_type == "テキスト" and has_text_data) or (data_type == "画像" and
                     key='jpeg_quality'
                 )
                 
-                # 可逆圧縮
-                lossless_data, lossless_ratio = compress_image_lossless(image)
-                lossless_size = len(lossless_data)
-                
                 # 非可逆圧縮
-                lossy_data, lossy_ratio, lossy_image = compress_image_lossy(image, quality)
+                lossy_data, lossy_ratio, lossy_image = compress_image_lossy(image, quality, original_size)
                 lossy_size = len(lossy_data)
                 
                 st.header("📊 ステップ1: 圧縮率の比較")

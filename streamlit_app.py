@@ -255,10 +255,16 @@ if (data_type == "テキスト" and has_text_data) or (data_type == "画像" and
                 
                 # 非可逆圧縮の品質スライダー
                 st.header("⚙️ 非可逆圧縮の品質調整")
+                
+                # セッションステートで品質値を保持
+                if 'jpeg_quality' not in st.session_state:
+                    st.session_state.jpeg_quality = 50
+                
                 quality = st.slider(
                     "JPEG品質を選択してください（低いほど高圧縮率）:",
-                    min_value=10, max_value=95, value=70, step=5,
-                    help="品質を下げると圧縮率は上がりますが、画質が劣化します"
+                    min_value=10, max_value=95, value=st.session_state.jpeg_quality, step=5,
+                    help="品質を下げると圧縮率は上がりますが、画質が劣化します",
+                    key='jpeg_quality'
                 )
                 
                 # 非可逆圧縮

@@ -82,6 +82,8 @@ data_type = st.radio("圧縮するデータの種類を選択してください:
 
 uploaded_file = None
 input_text = ""
+use_demo_text = False
+use_demo_image = False
 
 if data_type == "テキスト":
     st.subheader("📝 テキスト入力")
@@ -90,6 +92,28 @@ if data_type == "テキスト":
         placeholder="例: データ圧縮は、情報を効率的に保存・転送するための重要な技術です。",
         height=150
     )
+    
+    # デモデータ使用のチェックボックス
+    use_demo_text = st.checkbox("📊 デモデータを使用する（サンプルテキストで試したい場合）")
+    
+    if use_demo_text and not input_text:
+        demo_text = """データ圧縮技術の学習教材へようこそ！
+
+この教材では、可逆圧縮と非可逆圧縮の違いを実際に体験することができます。
+
+可逆圧縮（Lossless Compression）は、元のデータを完全に復元できる圧縮方式です。
+プログラムのソースコード、テキストファイル、医療画像などの精度が重要なデータに使用されます。
+主なアルゴリズムには、Huffman符号化、LZ77、LZ78、Deflate（gzip）などがあります。
+
+非可逆圧縮（Lossy Compression）は、人間が気づかない程度の情報を削除することで高い圧縮率を実現します。
+デジタル写真（JPEG）、動画ファイル（H.264、H.265）、音楽ファイル（MP3、AAC）などに広く使用されています。
+
+この体験を通じて、圧縮技術がどのように現代のデジタル社会を支えているかを理解しましょう。
+適切な圧縮方式の選択は、データの用途と品質要件によって決まります。"""
+        
+        input_text = demo_text
+        st.text_area("デモテキスト:", demo_text, height=200, disabled=True)
+        st.info("💡 このデモテキストを使って圧縮技術を体験できます")
 else:
     st.subheader("🖼️ 画像アップロード")
     uploaded_file = st.file_uploader(
@@ -97,9 +121,35 @@ else:
         type=['png', 'jpg', 'jpeg'],
         help="PNG、JPEGファイルをサポートしています"
     )
+    
+    # デモデータ使用のチェックボックス
+    use_demo_image = st.checkbox("📊 デモデータを使用する（サンプル画像で試したい場合）")
+    
+    if use_demo_image and not uploaded_file:
+        # デモ用のカラフルなグラデーション画像を生成
+        demo_image = Image.new('RGB', (400, 300))
+        pixels = []
+        for y in range(300):
+            for x in range(400):
+                r = int((x / 400) * 255)
+                g = int((y / 300) * 255)  
+                b = int(((x + y) / 700) * 255)
+                pixels.append((r, g, b))
+        demo_image.putdata(pixels)
+        
+        # 一時的にアップロードされたファイルとして扱う
+        demo_buffer = io.BytesIO()
+        demo_image.save(demo_buffer, format='PNG')
+        demo_buffer.seek(0)
+        
+        # デモ画像を表示
+        st.image(demo_image, caption="🎨 デモ用カラフルグラデーション画像", width=300)
+        st.info("💡 このデモ画像を使って圧縮技術を体験できます")
 
-# データが準備されている場合のみ処理を続行
-if (data_type == "テキスト" and input_text) or (data_type == "画像" and uploaded_file):
+# データが準備されている場合のみ処理を続行  
+has_text_data = input_text or (data_type == "テキスト" and use_demo_text)
+has_image_data = uploaded_file or (data_type == "画像" and use_demo_image)
+if (data_type == "テキスト" and has_text_data) or (data_type == "画像" and has_image_data):
     
     st.header("⚙️ 圧縮方式の選択と実行")
     
@@ -180,7 +230,19 @@ if (data_type == "テキスト" and input_text) or (data_type == "画像" and up
             
             else:
                 # 画像の処理
-                image = Image.open(uploaded_file)
+                if uploaded_file:
+                    image = Image.open(uploaded_file)
+                elif use_demo_image:
+                    # デモ用のカラフルなグラデーション画像を再生成
+                    image = Image.new('RGB', (400, 300))
+                    pixels = []
+                    for y in range(300):
+                        for x in range(400):
+                            r = int((x / 400) * 255)
+                            g = int((y / 300) * 255)  
+                            b = int(((x + y) / 700) * 255)
+                            pixels.append((r, g, b))
+                    image.putdata(pixels)
                 
                 # 元の画像サイズ
                 original_buffer = io.BytesIO()

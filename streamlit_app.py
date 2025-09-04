@@ -249,11 +249,7 @@ if (data_type == "テキスト" and has_text_data) or (data_type == "画像" and
                 image.save(original_buffer, format='PNG')
                 original_size = original_buffer.tell()
                 
-                # 可逆圧縮
-                lossless_data, lossless_ratio = compress_image_lossless(image)
-                lossless_size = len(lossless_data)
-                
-                # 非可逆圧縮の品質スライダー
+                # 非可逆圧縮の品質スライダー（最初に配置）
                 st.header("⚙️ 非可逆圧縮の品質調整")
                 
                 quality = st.slider(
@@ -262,6 +258,10 @@ if (data_type == "テキスト" and has_text_data) or (data_type == "画像" and
                     help="品質を下げると圧縮率は上がりますが、画質が劣化します",
                     key='jpeg_quality'
                 )
+                
+                # 可逆圧縮
+                lossless_data, lossless_ratio = compress_image_lossless(image)
+                lossless_size = len(lossless_data)
                 
                 # 非可逆圧縮
                 lossy_data, lossy_ratio, lossy_image = compress_image_lossy(image, quality)

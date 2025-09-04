@@ -1,15 +1,10 @@
 import streamlit as st
-import streamlit as st
-import plotly.graph_objects as go
 import plotly.express as px
 from PIL import Image
 import io
 import gzip
-import zlib
-import base64
 import numpy as np
-import pandas as pd
-from typing import Tuple, Optional
+from typing import Tuple
 
 # ページ設定
 st.set_page_config(
@@ -129,11 +124,6 @@ else:
                 pixels.append((r, g, b))
         demo_image.putdata(pixels)
         
-        # 一時的にアップロードされたファイルとして扱う
-        demo_buffer = io.BytesIO()
-        demo_image.save(demo_buffer, format='PNG')
-        demo_buffer.seek(0)
-        
         # デモ画像を表示
         st.image(demo_image, caption="🎨 デモ用カラフルグラデーション画像", width=300)
         st.info("💡 このデモ画像を使って圧縮技術を体験できます")
@@ -159,235 +149,231 @@ if (data_type == "テキスト" and has_text_data) or (data_type == "画像" and
         st.write("📈 高い圧縮率を実現")
         st.write("💡 用途: 写真、動画、音楽ファイルなど")
     
-    # 圧縮実行ボタン
-    if st.button("🚀 圧縮を実行", type="primary", use_container_width=True):
+    # データが準備されたら自動的に処理開始
+    if data_type == "テキスト":
+        # テキストの処理
+        original_size = len(input_text.encode('utf-8'))
+        compressed_data, lossless_ratio = compress_text_lossless(input_text)
+        lossless_size = len(compressed_data)
         
-        with st.spinner("圧縮処理中..."):
-            
-            if data_type == "テキスト":
-                # テキストの処理
-                original_size = len(input_text.encode('utf-8'))
-                compressed_data, lossless_ratio = compress_text_lossless(input_text)
-                lossless_size = len(compressed_data)
-                
-                st.header("📊 ステップ1: 圧縮率の比較")
-                
-                # 圧縮率の可視化
-                sizes_data = {
-                    '圧縮方式': ['元のテキスト', '可逆圧縮後'],
-                    'サイズ (bytes)': [original_size, lossless_size],
-                    'サイズ (KB)': [original_size/1024, lossless_size/1024]
-                }
-                
-                fig = px.bar(
-                    x=sizes_data['圧縮方式'], 
-                    y=sizes_data['サイズ (bytes)'],
-                    title="テキストサイズの比較",
-                    labels={'x': '圧縮方式', 'y': 'サイズ (bytes)'},
-                    color=sizes_data['圧縮方式'],
-                    color_discrete_map={
-                        '元のテキスト': '#FF6B6B',
-                        '可逆圧縮後': '#4ECDC4'
-                    }
-                )
-                fig.update_layout(showlegend=False, height=400)
-                st.plotly_chart(fig, use_container_width=True)
-                
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    st.metric("元のサイズ", f"{original_size} bytes", f"{original_size/1024:.2f} KB")
-                with col2:
-                    st.metric("可逆圧縮後", f"{lossless_size} bytes", f"{lossless_size/1024:.2f} KB")
-                with col3:
-                    compression_percent = (1 - lossless_ratio) * 100
-                    st.metric("圧縮率", f"{compression_percent:.1f}%", f"比率: {lossless_ratio:.3f}")
-                
-                st.header("🔍 ステップ2: データの品質比較")
-                
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    st.subheader("🔄 可逆圧縮後のテキスト")
-                    decompressed_text = gzip.decompress(compressed_data).decode('utf-8')
-                    st.text_area("復元されたテキスト:", decompressed_text, height=150, disabled=True)
-                    if input_text == decompressed_text:
-                        st.success("✅ 元のテキストと完全に一致しています！")
-                    else:
-                        st.error("❌ データの不整合が発生しました")
-                
-                with col2:
-                    st.subheader("🗜️ 非可逆圧縮について")
-                    st.warning("⚠️ テキストデータには非可逆圧縮は適用されません")
-                    st.info("📝 テキストは意味のある情報の集合体のため、一文字でも失われると意味が変わってしまう可能性があります。そのため、テキストには通常、可逆圧縮のみが使用されます。")
-            
-            else:
-                # 画像の処理
-                if uploaded_file:
-                    image = Image.open(uploaded_file)
-                elif use_demo_image:
-                    # デモ用のカラフルなグラデーション画像を再生成
-                    image = Image.new('RGB', (400, 300))
-                    pixels = []
-                    for y in range(300):
-                        for x in range(400):
-                            r = int((x / 400) * 255)
-                            g = int((y / 300) * 255)  
-                            b = int(((x + y) / 700) * 255)
-                            pixels.append((r, g, b))
-                    image.putdata(pixels)
-                
-                # 元の画像サイズ（未圧縮のビットマップサイズで計算）
-                width, height = image.size
-                if image.mode == 'RGB':
-                    original_size = width * height * 3  # RGB: 3 bytes per pixel
-                elif image.mode == 'RGBA':
-                    original_size = width * height * 4  # RGBA: 4 bytes per pixel
-                else:
-                    original_size = width * height  # グレースケールなど: 1 byte per pixel
-                
-                # 可逆圧縮
-                lossless_data, lossless_ratio = compress_image_lossless(image, original_size)
-                lossless_size = len(lossless_data)
-                
-                # 非可逆圧縮の品質スライダー
-                st.header("⚙️ 非可逆圧縮の品質調整")
-                
-                quality = st.slider(
-                    "JPEG品質を選択してください（低いほど高圧縮率）:",
-                    min_value=10, max_value=95, value=50, step=5,
-                    help="品質を下げると圧縮率は上がりますが、画質が劣化します",
-                    key='jpeg_quality'
-                )
-                
-                # 非可逆圧縮
-                lossy_data, lossy_ratio, lossy_image = compress_image_lossy(image, quality, original_size)
-                lossy_size = len(lossy_data)
-                
-                st.header("📊 ステップ1: 圧縮率の比較")
-                
-                # 圧縮率の可視化
-                sizes_data = {
-                    '圧縮方式': ['元の画像', '可逆圧縮後', '非可逆圧縮後'],
-                    'サイズ (bytes)': [original_size, lossless_size, lossy_size],
-                    'サイズ (MB)': [original_size/(1024*1024), lossless_size/(1024*1024), lossy_size/(1024*1024)]
-                }
-                
-                fig = px.bar(
-                    x=sizes_data['圧縮方式'], 
-                    y=sizes_data['サイズ (bytes)'],
-                    title="画像サイズの比較",
-                    labels={'x': '圧縮方式', 'y': 'サイズ (bytes)'},
-                    color=sizes_data['圧縮方式'],
-                    color_discrete_map={
-                        '元の画像': '#FF6B6B',
-                        '可逆圧縮後': '#4ECDC4',
-                        '非可逆圧縮後': '#45B7D1'
-                    }
-                )
-                fig.update_layout(showlegend=False, height=400)
-                st.plotly_chart(fig, use_container_width=True)
-                
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    st.metric("元のサイズ", f"{original_size/1024:.1f} KB", f"{original_size/(1024*1024):.2f} MB")
-                with col2:
-                    st.metric("可逆圧縮後", f"{lossless_size/1024:.1f} KB", f"{lossless_size/(1024*1024):.2f} MB")
-                    lossless_percent = (1 - lossless_ratio) * 100
-                    st.caption(f"圧縮率: {lossless_percent:.1f}%")
-                with col3:
-                    st.metric("非可逆圧縮後", f"{lossy_size/1024:.1f} KB", f"{lossy_size/(1024*1024):.2f} MB")
-                    lossy_percent = (1 - lossy_ratio) * 100
-                    st.caption(f"圧縮率: {lossy_percent:.1f}%")
-                
-                st.header("🔍 ステップ2: 画質の比較")
-                
-                col1, col2, col3 = st.columns(3)
-                
-                with col1:
-                    st.subheader("🖼️ 元の画像")
-                    st.image(image, caption="オリジナル", use_container_width=True)
-                
-                with col2:
-                    st.subheader("🔄 可逆圧縮後")
-                    # 可逆圧縮では画質は変わらない
-                    st.image(image, caption="PNG圧縮（品質劣化なし）", use_container_width=True)
-                    st.success("✅ 元の画像と完全に同じ品質")
-                
-                with col3:
-                    st.subheader("🗜️ 非可逆圧縮後")
-                    st.image(lossy_image, caption=f"JPEG圧縮（品質{quality}）", use_container_width=True)
-                    
-                    # PSNR計算
-                    psnr_value = calculate_psnr(image, lossy_image)
-                    if psnr_value != float('inf'):
-                        st.info(f"📊 PSNR: {psnr_value:.2f} dB")
-                        if psnr_value > 30:
-                            st.success("✅ 高品質（劣化はほとんど見えません）")
-                        elif psnr_value > 20:
-                            st.warning("⚠️ 中品質（わずかに劣化が見えます）")
-                        else:
-                            st.error("❌ 低品質（明らかな劣化があります）")
-                
-                st.header("🔄 ステップ3: 復元（展開）の概念")
-                
-                st.info("""
-                **🔄 可逆圧縮の復元:**
-                - 圧縮されたデータから元のデータを完全に復元可能
-                - 情報の損失は一切なし
-                - 医療画像や設計図面など、精度が重要な用途に最適
-                
-                **🗜️ 非可逆圧縮の復元:**
-                - 圧縮時に削除されたデータは復元不可能
-                - 人間の感覚では気づきにくい部分の情報を削除
-                - ファイルサイズを大幅に削減可能
-                """)
+        st.header("📊 ステップ1: 圧縮率の比較")
         
-        # まとめセクション
-        st.header("📚 まとめと応用")
+        # 圧縮率の可視化
+        sizes_data = {
+            '圧縮方式': ['元のテキスト', '可逆圧縮後'],
+            'サイズ (bytes)': [original_size, lossless_size],
+            'サイズ (KB)': [original_size/1024, lossless_size/1024]
+        }
+        
+        fig = px.bar(
+            x=sizes_data['圧縮方式'], 
+            y=sizes_data['サイズ (bytes)'],
+            title="テキストサイズの比較",
+            labels={'x': '圧縮方式', 'y': 'サイズ (bytes)'},
+            color=sizes_data['圧縮方式'],
+            color_discrete_map={
+                '元のテキスト': '#FF6B6B',
+                '可逆圧縮後': '#4ECDC4'
+            }
+        )
+        fig.update_layout(showlegend=False, height=400)
+        st.plotly_chart(fig, use_container_width=True)
+        
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("元のサイズ", f"{original_size} bytes", f"{original_size/1024:.2f} KB")
+        with col2:
+            st.metric("可逆圧縮後", f"{lossless_size} bytes", f"{lossless_size/1024:.2f} KB")
+        with col3:
+            compression_percent = (1 - lossless_ratio) * 100
+            st.metric("圧縮率", f"{compression_percent:.1f}%", f"比率: {lossless_ratio:.3f}")
+        
+        st.header("🔍 ステップ2: データの品質比較")
         
         col1, col2 = st.columns(2)
         
         with col1:
-            st.subheader("🔄 可逆圧縮の特徴と用途")
-            st.success("""
-            **特徴:**
-            - データの完全保持
-            - 情報損失なし
-            - 圧縮率は控えめ
-            
-            **主な用途:**
-            - プログラムのソースコード
-            - テキストファイル
-            - 医療画像（CTスキャン、MRIなど）
-            - 設計図面・CADデータ
-            - データベースのバックアップ
-            """)
+            st.subheader("🔄 可逆圧縮後のテキスト")
+            decompressed_text = gzip.decompress(compressed_data).decode('utf-8')
+            st.text_area("復元されたテキスト:", decompressed_text, height=150, disabled=True)
+            if input_text == decompressed_text:
+                st.success("✅ 元のテキストと完全に一致しています！")
+            else:
+                st.error("❌ データの不整合が発生しました")
         
         with col2:
-            st.subheader("🗜️ 非可逆圧縮の特徴と用途")
-            st.info("""
-            **特徴:**
-            - 高い圧縮率
-            - 人間が気づかない程度の情報損失
-            - ファイルサイズ大幅削減
+            st.subheader("🗜️ 非可逆圧縮について")
+            st.warning("⚠️ テキストデータには非可逆圧縮は適用されません")
+            st.info("📝 テキストは意味のある情報の集合体のため、一文字でも失われると意味が変わってしまう可能性があります。そのため、テキストには通常、可逆圧縮のみが使用されます。")
+    
+    else:
+        # 画像の処理
+        if uploaded_file:
+            image = Image.open(uploaded_file)
+        elif use_demo_image:
+            # デモ用のカラフルなグラデーション画像を再生成
+            image = Image.new('RGB', (400, 300))
+            pixels = []
+            for y in range(300):
+                for x in range(400):
+                    r = int((x / 400) * 255)
+                    g = int((y / 300) * 255)  
+                    b = int(((x + y) / 700) * 255)
+                    pixels.append((r, g, b))
+            image.putdata(pixels)
+        
+        # 元の画像サイズ（未圧縮のビットマップサイズで計算）
+        width, height = image.size
+        if image.mode == 'RGB':
+            original_size = width * height * 3  # RGB: 3 bytes per pixel
+        elif image.mode == 'RGBA':
+            original_size = width * height * 4  # RGBA: 4 bytes per pixel
+        else:
+            original_size = width * height  # グレースケールなど: 1 byte per pixel
+        
+        # 可逆圧縮
+        lossless_data, lossless_ratio = compress_image_lossless(image, original_size)
+        lossless_size = len(lossless_data)
+        
+        # 非可逆圧縮の品質スライダー
+        st.header("⚙️ 非可逆圧縮の品質調整")
+        
+        quality = st.slider(
+            "JPEG品質を選択してください（低いほど高圧縮率）:",
+            min_value=10, max_value=95, value=50, step=5,
+            help="品質を下げると圧縮率は上がりますが、画質が劣化します",
+            key='jpeg_quality'
+        )
+        
+        # 非可逆圧縮
+        lossy_data, lossy_ratio, lossy_image = compress_image_lossy(image, quality, original_size)
+        lossy_size = len(lossy_data)
+        
+        st.header("📊 ステップ1: 圧縮率の比較")
+        
+        # 圧縮率の可視化
+        sizes_data = {
+            '圧縮方式': ['元の画像', '可逆圧縮後', '非可逆圧縮後'],
+            'サイズ (bytes)': [original_size, lossless_size, lossy_size],
+            'サイズ (MB)': [original_size/(1024*1024), lossless_size/(1024*1024), lossy_size/(1024*1024)]
+        }
+        
+        fig = px.bar(
+            x=sizes_data['圧縮方式'], 
+            y=sizes_data['サイズ (bytes)'],
+            title="画像サイズの比較",
+            labels={'x': '圧縮方式', 'y': 'サイズ (bytes)'},
+            color=sizes_data['圧縮方式'],
+            color_discrete_map={
+                '元の画像': '#FF6B6B',
+                '可逆圧縮後': '#4ECDC4',
+                '非可逆圧縮後': '#45B7D1'
+            }
+        )
+        fig.update_layout(showlegend=False, height=400)
+        st.plotly_chart(fig, use_container_width=True)
+        
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("元のサイズ", f"{original_size/1024:.1f} KB", f"{original_size/(1024*1024):.2f} MB")
+        with col2:
+            st.metric("可逆圧縮後", f"{lossless_size/1024:.1f} KB", f"{lossless_size/(1024*1024):.2f} MB")
+            lossless_percent = (1 - lossless_ratio) * 100
+            st.caption(f"圧縮率: {lossless_percent:.1f}%")
+        with col3:
+            st.metric("非可逆圧縮後", f"{lossy_size/1024:.1f} KB", f"{lossy_size/(1024*1024):.2f} MB")
+            lossy_percent = (1 - lossy_ratio) * 100
+            st.caption(f"圧縮率: {lossy_percent:.1f}%")
+        
+        st.header("🔍 ステップ2: 画質の比較")
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.subheader("🖼️ 元の画像")
+            st.image(image, caption="オリジナル", use_container_width=True)
+        
+        with col2:
+            st.subheader("🔄 可逆圧縮後")
+            # 可逆圧縮では画質は変わらない
+            st.image(image, caption="PNG圧縮（品質劣化なし）", use_container_width=True)
+            st.success("✅ 元の画像と完全に同じ品質")
+        
+        with col3:
+            st.subheader("🗜️ 非可逆圧縮後")
+            st.image(lossy_image, caption=f"JPEG圧縮（品質{quality}）", use_container_width=True)
             
-            **主な用途:**
-            - デジタル写真（JPEG）
-            - 動画ファイル（MP4、H.264など）
-            - 音楽ファイル（MP3、AAC など）
-            - ウェブ用画像
-            - ストリーミングサービス
-            """)
+            # PSNR計算
+            psnr_value = calculate_psnr(image, lossy_image)
+            if psnr_value != float('inf'):
+                st.info(f"📊 PSNR: {psnr_value:.2f} dB")
+                if psnr_value > 30:
+                    st.success("✅ 高品質（劣化はほとんど見えません）")
+                elif psnr_value > 20:
+                    st.warning("⚠️ 中品質（わずかに劣化が見えます）")
+                else:
+                    st.error("❌ 低品質（明らかな劣化があります）")
         
-        st.success("""
-        🎯 **重要なポイント:**
+        st.header("🔄 ステップ3: 復元（展開）の概念")
         
-        圧縮方式の選択は、**データの用途と許容できる品質レベル**によって決まります。
-        - **完全性が必要** → 可逆圧縮を選択
-        - **サイズ削減が優先** → 非可逆圧縮を選択
+        st.info("""
+        **🔄 可逆圧縮の復元:**
+        - 圧縮されたデータから元のデータを完全に復元可能
+        - 情報の損失は一切なし
+        - 医療画像や設計図面など、精度が重要な用途に最適
         
-        現代のデジタル社会では、この2つの圧縮技術が適材適所で使い分けられています。
+        **🗜️ 非可逆圧縮の復元:**
+        - 圧縮時に削除されたデータは復元不可能
+        - 人間の感覚では気づきにくい部分の情報を削除
+        - ファイルサイズを大幅に削減可能
         """)
+    
+    # まとめセクション
+    st.header("📚 まとめと応用")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("🔄 可逆圧縮の特徴と用途")
+        st.success("""
+        **特徴:**
+        - データの完全保持
+        - 情報損失なし
+        - 圧縮率は控えめ
+        
+        **主な用途:**
+        - プログラムのソースコード
+        - テキストファイル
+        - 医療画像（CTスキャン、MRIなど）
+        - 設計図面・CADデータ
+        - データベースのバックアップ
+        """)
+    
+    with col2:
+        st.subheader("🗜️ 非可逆圧縮の特徴と用途")
+        st.info("""
+        **特徴:**
+        - 高い圧縮率
+        - 人間が気づかない程度の情報損失
+        - ファイルサイズ大幅削減
+        
+        **主な用途:**
+        - デジタル写真（JPEG）
+        - 動画ファイル（MP4、H.264など）
+        - 音楽ファイル（MP3、AAC など）
+        - ウェブ用画像
+        - ストリーミングサービス
+        """)
+    
+    st.success("""
+    🎯 **重要なポイント:**
+    
+    圧縮方式の選択は、**データの用途と許容できる品質レベル**によって決まります。
+    - **完全性が必要** → 可逆圧縮を選択
+    - **サイズ削減が優先** → 非可逆圧縮を選択
+    
+    現代のデジタル社会では、この2つの圧縮技術が適材適所で使い分けられています。
+    """)
 
 else:
     st.info("👆 データをアップロードまたは入力してください。圧縮の仕組みを体験的に学びましょう！")

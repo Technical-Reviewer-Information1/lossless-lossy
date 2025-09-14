@@ -14,7 +14,7 @@ st.set_page_config(
 )
 
 # タイトルとクレジット
-st.title("🗜️ データの圧縮①可逆圧縮と非可逆圧縮")
+st.title("データの圧縮①可逆圧縮と非可逆圧縮（pp.166-167）")
 st.caption("Created by Dit-Lab.(Daiki ITO)")
 st.caption("Supported by Tomoaki ATSUMI")
 

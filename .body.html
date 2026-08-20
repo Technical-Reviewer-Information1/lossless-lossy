@@ -1,0 +1,91 @@
+  <section class="step" id="step1">
+    <h2><span class="no">STEP 1</span>圧縮して、もとに戻してみる</h2>
+    <p class="desc">同じ「圧縮」でも、<strong>完全に戻せるもの</strong>と<strong>戻せないもの</strong>があります。自分で確かめましょう。</p>
+    <div class="panel">
+      <p class="qhead" style="margin:0 0 8px">① 可逆圧縮の例（同じ文字の連続をまとめる）</p>
+      <div class="btn-row" style="align-items:flex-end;flex-wrap:wrap;gap:10px">
+        <label class="fld" for="txtIn">もとのデータ<br>
+          <input type="text" id="txtIn" value="AAAAABBBCCCCCCAAB" class="mono" style="width:20em"></label>
+        <button class="btn" data-t="AAAAABBBCCCCCCAAB">例1</button>
+        <button class="btn" data-t="ABABABABAB">例2（連続が少ない）</button>
+      </div>
+      <div class="flow" id="rleFlow" style="margin-top:12px"></div>
+      <div class="note" id="rleNote" style="margin-top:10px"></div>
+      <hr class="sep">
+      <p class="qhead" style="margin:0 0 8px">② 非可逆圧縮の例（人が気づきにくい部分を削る）</p>
+      <label class="fld" for="lvl">残す階調：<span class="mono" id="lvlV">4</span> 段階（もとは256段階）</label>
+      <input type="range" id="lvl" min="1" max="8" step="1" value="2">
+      <div class="imgpair2" style="margin-top:12px">
+        <figure><div id="imgA"></div><figcaption>もとの画像<br>256階調</figcaption></figure>
+        <figure><div id="imgB"></div><figcaption>圧縮したデータ<br><span id="capB">4</span>階調</figcaption></figure>
+        <figure><div id="imgC"></div><figcaption>もとに戻そうとした結果</figcaption></figure>
+        <figure><div id="imgD"></div><figcaption>もとの画像との差<br>（明るいほど違う）</figcaption></figure>
+      </div>
+      <div class="note" id="imgNote" style="margin-top:10px"></div>
+    </div>
+  </section>
+
+  <section class="step" id="step2">
+    <h2><span class="no">STEP 2</span>圧縮率を計算する</h2>
+    <p class="desc">圧縮率（％）＝ <strong>圧縮後のデータ量 ÷ 圧縮前のデータ量 × 100</strong>。この本の定義では<strong>小さいほど効率がよい</strong>ことになります。</p>
+    <div class="panel">
+      <div class="btn-row" style="flex-wrap:wrap">
+        <button class="btn" data-r="20,15">20MB → 15MB</button>
+        <button class="btn" data-r="20,10">20MB → 10MB</button>
+        <button class="btn" data-r="20,20">20MB → 20MB（変わらない）</button>
+      </div>
+      <div class="grid c2" style="margin-top:12px">
+        <div>
+          <label class="fld" for="before">圧縮前のデータ量（MB）</label><input type="number" id="before" value="20" min="0" step="0.1" class="mono">
+          <label class="fld" for="after" style="margin-top:10px">圧縮後のデータ量（MB）</label><input type="number" id="after" value="15" min="0" step="0.1" class="mono">
+        </div>
+        <div>
+          <div class="eqbox" id="rEq">—</div>
+          <div class="ratiobar"><i id="rBar"></i><span id="rBarT"></span></div>
+          <div class="note" id="rNote" style="margin-top:12px"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="step" id="step3">
+    <h2><span class="no">STEP 3</span>どちらの圧縮が向いているか</h2>
+    <p class="desc">「完全にもとに戻らないと困るか」で考えます。1つずつ選んでみましょう。</p>
+    <div class="panel">
+      <div class="matchgrid" id="matchBox"></div>
+      <div class="note" id="matchNote" style="margin-top:12px"></div>
+    </div>
+  </section>
+
+  <section class="step" id="step4">
+    <h2><span class="no">STEP 4</span>本文の空欄【ア】〜【オ】を確かめる</h2>
+    <div class="panel" id="blankBox"></div>
+    <div class="note" id="blankNote" style="margin-top:10px"></div>
+  </section>
+
+  <section class="step" id="step5">
+    <h2><span class="no">STEP 5</span>「最も適当でないもの」を選ぶ（問1b）</h2>
+    <div class="panel">
+      <p class="qhead">非可逆圧縮についての記述として<strong>最も適当でないもの</strong>はどれか。</p>
+      <div id="q2Choices" class="choice4 v"></div>
+      <div class="note" id="q2Fb" hidden style="margin-top:10px"></div>
+    </div>
+  </section>
+
+  <section class="step" id="glossary">
+    <h2><span class="no">用語</span>この節で出てくることば</h2>
+    <div class="panel"><div id="glossBox"></div></div>
+  </section>
+
+  <section class="step" id="wrap">
+    <h2><span class="no">まとめ</span>おさえておきたいこと</h2>
+    <div class="panel">
+      <ul class="bullets">
+        <li><strong>圧縮</strong>＝データの意味を保ったまま、一定の手順でデータ量を小さくすること。</li>
+        <li><strong>可逆圧縮</strong>＝圧縮前のデータに完全に戻せる。文章データやプログラムデータ向き。ZIP・PNG・ランレングス法・ハフマン符号化など。</li>
+        <li><strong>非可逆圧縮</strong>＝完全には戻せないが、圧縮効率が高い。人が気づきにくい部分を削る。写真・音声・動画向き。JPEG・MP3・MP4など。</li>
+        <li>圧縮率（％）＝ 圧縮後 ÷ 圧縮前 × 100。この定義では<strong>圧縮率が小さいほど、よく縮んでいる</strong>。</li>
+        <li>「同じ文字列の連続をまとめる」のは<strong>ランレングス法＝可逆圧縮</strong>。非可逆圧縮の説明と取り違えないこと。</li>
+      </ul>
+    </div>
+  </section>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>データの圧縮①　可逆圧縮と非可逆圧縮｜情報Ⅰ共通テスト対策問題集</title>
+<meta name="description" content="元に戻せる圧縮と戻せない圧縮を、実際に圧縮・復元して見比べます。圧縮率の計算もその場で確かめられます。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%2315181c%22/%3E%3Ctext x=%2216%22 y=%2222%22 font-size=%2218%22 font-family=%22monospace%22 fill=%22%23fff%22 text-anchor=%22middle%22%3E01%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<header class="app-header">
+  <div class="inner">
+    <span class="eyebrow">第 5 章　デジタル　5-12</span>
+    <h1>データの圧縮①　可逆圧縮と非可逆圧縮（pp.166-167）</h1>
+    <p class="lead">元に戻せる圧縮と戻せない圧縮を、実際に圧縮・復元して見比べます。圧縮率の計算もその場で確かめられます。</p>
+    <p class="credit">Created by Dit-Lab.(Daiki ITO)　/　Supported by Tomoaki ATSUMI</p>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="step" id="step1">
+    <h2><span class="no">STEP 1</span>圧縮して、もとに戻してみる</h2>
+    <p class="desc">同じ「圧縮」でも、<strong>完全に戻せるもの</strong>と<strong>戻せないもの</strong>があります。自分で確かめましょう。</p>
+    <div class="panel">
+      <p class="qhead" style="margin:0 0 8px">① 可逆圧縮の例（同じ文字の連続をまとめる）</p>
+      <div class="btn-row" style="align-items:flex-end;flex-wrap:wrap;gap:10px">
+        <label class="fld" for="txtIn">もとのデータ<br>
+          <input type="text" id="txtIn" value="AAAAABBBCCCCCCAAB" class="mono" style="width:20em"></label>
+        <button class="btn" data-t="AAAAABBBCCCCCCAAB">例1</button>
+        <button class="btn" data-t="ABABABABAB">例2（連続が少ない）</button>
+      </div>
+      <div class="flow" id="rleFlow" style="margin-top:12px"></div>
+      <div class="note" id="rleNote" style="margin-top:10px"></div>
+      <hr class="sep">
+      <p class="qhead" style="margin:0 0 8px">② 非可逆圧縮の例（人が気づきにくい部分を削る）</p>
+      <label class="fld" for="lvl">残す階調：<span class="mono" id="lvlV">4</span> 段階（もとは256段階）</label>
+      <input type="range" id="lvl" min="1" max="8" step="1" value="2">
+      <div class="imgpair2" style="margin-top:12px">
+        <figure><div id="imgA"></div><figcaption>もとの画像<br>256階調</figcaption></figure>
+        <figure><div id="imgB"></div><figcaption>圧縮したデータ<br><span id="capB">4</span>階調</figcaption></figure>
+        <figure><div id="imgC"></div><figcaption>もとに戻そうとした結果</figcaption></figure>
+        <figure><div id="imgD"></div><figcaption>もとの画像との差<br>（明るいほど違う）</figcaption></figure>
+      </div>
+      <div class="note" id="imgNote" style="margin-top:10px"></div>
+    </div>
+  </section>
+
+  <section class="step" id="step2">
+    <h2><span class="no">STEP 2</span>圧縮率を計算する</h2>
+    <p class="desc">圧縮率（％）＝ <strong>圧縮後のデータ量 ÷ 圧縮前のデータ量 × 100</strong>。この本の定義では<strong>小さいほど効率がよい</strong>ことになります。</p>
+    <div class="panel">
+      <div class="btn-row" style="flex-wrap:wrap">
+        <button class="btn" data-r="20,15">20MB → 15MB</button>
+        <button class="btn" data-r="20,10">20MB → 10MB</button>
+        <button class="btn" data-r="20,20">20MB → 20MB（変わらない）</button>
+      </div>
+      <div class="grid c2" style="margin-top:12px">
+        <div>
+          <label class="fld" for="before">圧縮前のデータ量（MB）</label><input type="number" id="before" value="20" min="0" step="0.1" class="mono">
+          <label class="fld" for="after" style="margin-top:10px">圧縮後のデータ量（MB）</label><input type="number" id="after" value="15" min="0" step="0.1" class="mono">
+        </div>
+        <div>
+          <div class="eqbox" id="rEq">—</div>
+          <div class="ratiobar"><i id="rBar"></i><span id="rBarT"></span></div>
+          <div class="note" id="rNote" style="margin-top:12px"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="step" id="step3">
+    <h2><span class="no">STEP 3</span>どちらの圧縮が向いているか</h2>
+    <p class="desc">「完全にもとに戻らないと困るか」で考えます。1つずつ選んでみましょう。</p>
+    <div class="panel">
+      <div class="matchgrid" id="matchBox"></div>
+      <div class="note" id="matchNote" style="margin-top:12px"></div>
+    </div>
+  </section>
+
+  <section class="step" id="step4">
+    <h2><span class="no">STEP 4</span>本文の空欄【ア】〜【オ】を確かめる</h2>
+    <div class="panel" id="blankBox"></div>
+    <div class="note" id="blankNote" style="margin-top:10px"></div>
+  </section>
+
+  <section class="step" id="step5">
+    <h2><span class="no">STEP 5</span>「最も適当でないもの」を選ぶ（問1b）</h2>
+    <div class="panel">
+      <p class="qhead">非可逆圧縮についての記述として<strong>最も適当でないもの</strong>はどれか。</p>
+      <div id="q2Choices" class="choice4 v"></div>
+      <div class="note" id="q2Fb" hidden style="margin-top:10px"></div>
+    </div>
+  </section>
+
+  <section class="step" id="glossary">
+    <h2><span class="no">用語</span>この節で出てくることば</h2>
+    <div class="panel"><div id="glossBox"></div></div>
+  </section>
+
+  <section class="step" id="wrap">
+    <h2><span class="no">まとめ</span>おさえておきたいこと</h2>
+    <div class="panel">
+      <ul class="bullets">
+        <li><strong>圧縮</strong>＝データの意味を保ったまま、一定の手順でデータ量を小さくすること。</li>
+        <li><strong>可逆圧縮</strong>＝圧縮前のデータに完全に戻せる。文章データやプログラムデータ向き。ZIP・PNG・ランレングス法・ハフマン符号化など。</li>
+        <li><strong>非可逆圧縮</strong>＝完全には戻せないが、圧縮効率が高い。人が気づきにくい部分を削る。写真・音声・動画向き。JPEG・MP3・MP4など。</li>
+        <li>圧縮率（％）＝ 圧縮後 ÷ 圧縮前 × 100。この定義では<strong>圧縮率が小さいほど、よく縮んでいる</strong>。</li>
+        <li>「同じ文字列の連続をまとめる」のは<strong>ランレングス法＝可逆圧縮</strong>。非可逆圧縮の説明と取り違えないこと。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="step">
+    <h2><span class="no">活用</span>授業・探究での使い方</h2>
+    <div class="use-note">
+      <h3>授業で</h3>
+      <ul>
+        <li>STEP 1 で同じ操作を可逆・非可逆の両方で行い、復元したときの違いを目で確かめさせる。</li>
+        <li>STEP 2 で圧縮率を計算し、「圧縮率が小さいほど効率がよい」ことを数値で確認する。</li>
+        <li>STEP 3 でファイルの種類ごとにどちらの圧縮が向くかを考えさせる。</li>
+      </ul>
+      <h3 style="margin-top:12px">探究で</h3>
+      <ul>
+        <li>自分のパソコンやスマートフォンにあるファイル形式（zip・jpg・png・mp3など）を可逆・非可逆に分類する。</li>
+        <li>同じ写真をJPEGの画質を変えて保存し、ファイルサイズと見た目の変化を比べる。</li>
+        <li>音楽配信サービスの音質設定とデータ量の関係を調べ、通信量の観点から考える。</li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<footer class="app-footer">
+  情報Ⅰ 共通テスト対策問題集（技術評論社）連動Webアプリ　/　Created by Dit-Lab.(Daiki ITO)　/　Supported by Tomoaki ATSUMI
+</footer>
+
+<script src="js/tools.js"></script>
+<script src="js/chart.js"></script>
+<script src="js/terms.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

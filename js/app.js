@@ -149,7 +149,7 @@
     $('blankBox').innerHTML = BLANKS.map((b, i) => {
       const long = b.ch.some(c => c.length > 12);
       return '<div' + (i ? ' style="margin-top:18px;padding-top:16px;border-top:1px solid var(--line)"' : '') + '>' +
-        '<p class="qhead" style="margin:0 0 8px">【' + b.k + '】　' + b.q + '</p>' +
+        '<p class="pq">【' + b.k + '】　' + b.q + '</p>' +
         '<div class="choice4' + (long ? ' v' : '') + '" data-i="' + i + '">' + b.ch.map((c, j) =>
           '<button class="btn" data-i="' + i + '" data-c="' + c + '" style="text-align:' + (long ? 'left' : 'center') + '">' +
           '⓪①②③'[j] + '　' + c + '</button>').join('') +

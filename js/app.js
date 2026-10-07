@@ -215,5 +215,19 @@
     drawRle(); drawLossy(); drawRatio(); drawMatch(); drawBlanks(); drawQ2();
     window.Terms.attach();
   }
+  if (window.Predict) Predict.make('pdL', {
+    q: '写真を <strong>JPEG</strong>（非可逆圧縮）で保存しました。あとから <strong>PNG</strong>（可逆圧縮）に変換すれば、元の画質に戻せるでしょうか？',
+    type: 'pick',
+    ch: ['戻せる', '戻せない', 'ファイルを小さくすれば戻せる', '何度も変換すれば戻せる'],
+    answer: function () { return 1; },
+    show: function () {
+      return 'JPEGにした時点で<strong>捨てられた情報はもう残っていません</strong>。' +
+             'PNGは「これ以上減らさない」だけで、<strong>失われたものを取り戻す力はありません</strong>。';
+    },
+    why: '非可逆圧縮は<strong>一方通行</strong>です。元に戻す必要があるデータ（文書・プログラム・計測値）には使えません。' +
+         'JPEGのまま編集と保存をくり返すと、そのたびに情報が失われて画質が落ちていきます。' +
+         '元データは可逆の形で残しておくのが安全です。'
+  });
+
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();

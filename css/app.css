@@ -36,3 +36,6 @@ table.tbl td .blankin{width:100%; max-width:none}
 .imgpair2 figure{margin:0;text-align:center}
 .imgpair2 svg{display:block;width:100%;max-width:150px;margin:0 auto;border:1px solid var(--line)}
 .imgpair2 figcaption{font-size:.76rem;color:var(--muted);margin-top:5px}
+
+/* 圧縮率バーをなめらかに */
+.ratiobar i{transition:width .5s cubic-bezier(.45,.05,.35,1)}
